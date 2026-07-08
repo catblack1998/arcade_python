@@ -2,8 +2,6 @@ import mysql.connector
 import streamlit as st
 
 def obtener_conexion():
-    # Streamlit leerá automáticamente el archivo secrets.toml localmente
-    # Y en la web leerá la configuración de la nube
     return mysql.connector.connect(
         host=st.secrets["mysql"]["host"],
         user=st.secrets["mysql"]["user"],
@@ -11,8 +9,6 @@ def obtener_conexion():
         database=st.secrets["mysql"]["database"],
         port=st.secrets["mysql"]["port"]
     )
-
-# ... El resto de tus funciones (verificar_usuario y actualizar_progreso_db) se quedan EXACTAMENTE IGUAL ...
 
 def verificar_usuario(username, password):
     try:
@@ -26,13 +22,32 @@ def verificar_usuario(username, password):
     except Exception as e:
         return None
 
-def actualizar_progreso_db(username, monedas, nivel):
+def registrar_usuario_db(username, password):
+    try:
+        conn = obtener_conexion()
+        cursor = conn.cursor()
+        # Registra un usuario nuevo empezando desde el nivel 0 (Encuesta) y con 0 monedas
+        cursor.execute(
+            "INSERT INTO usuarios (username, password, monedas, nivel_actual) VALUES (%s, %s, 0, 0)",
+            (username, password)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True
+    except mysql.connector.Error as err:
+        # Si el usuario ya existe, dará error de duplicado
+        return False
+
+def actualizar_progreso_db(username, monedas, nivel, exp="", meta="", que_es=""):
     try:
         conn = obtener_conexion()
         cursor = conn.cursor()
         cursor.execute(
-            "UPDATE usuarios SET monedas = %s, nivel_actual = %s WHERE username = %s",
-            (monedas, nivel, username)
+            """UPDATE usuarios 
+               SET monedas = %s, nivel_actual = %s, resp_experiencia = %s, resp_meta = %s, resp_que_es = %s 
+               WHERE username = %s""",
+            (monedas, nivel, exp, meta, que_es, username)
         )
         conn.commit()
         cursor.close()

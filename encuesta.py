@@ -2,20 +2,33 @@ import streamlit as st
 import db
 
 def mostrar_encuesta():
-    st.subheader("📋 Encuesta de Responsabilidad")
-    st.write("Responde con la verdad para reclamar tus monedas del día:")
+    st.subheader("📋 Entrevista Inicial de Programación")
+    st.write("Responde estas preguntas para desbloquear tus herramientas y ganar tus primeras monedas:")
     
-    # Preguntas de responsabilidad
-    p1 = st.checkbox("¿Ordenaste tu cuarto hoy?")
-    p2 = st.checkbox("¿Hiciste tus deberes escolares o tareas asignadas?")
-    p3 = st.checkbox("¿Leíste o practicaste algo productivo hoy?")
+    p1 = st.text_input("1. ¿Tienes alguna experiencia previa en programación?", placeholder="Ej: Ninguna, o he visto videos...")
+    p2 = st.text_input("2. ¿Qué te gustaría crear o hacer después de aprender a programar?", placeholder="Ej: Crear videojuegos, páginas web...")
+    p3 = st.text_input("3. Con tus propias palabras, ¿sabes o te imaginas qué es Python?", placeholder="Ej: Un lenguaje para computadoras...")
     
-    if st.button("🧧 Reclamar Monedas"):
-        if p1 and p2 and p3:
-            st.session_state.coins = 3
-            db.actualizar_progreso_db(st.session_state.usuario, st.session_state.coins, 1)
-            st.success("¡Excelente! Has demostrado ser responsable. ¡Recibes 3 monedas! Go, go, go! 🪙🪙🪙")
-            # Forzar recarga para actualizar el marcador
-            st.rerun()
+    st.write("---")
+    
+    if st.button("🧧 Enviar Entrevista y Empezar Juego"):
+        if p1.strip() == "" or p2.strip() == "" or p3.strip() == "":
+            st.error("❌ Por favor, escribe algo en cada una de las respuestas antes de enviar.")
         else:
-            st.error("❌ Para ganar monedas debes cumplir con todas tus responsabilidades. ¡Inténtalo de nuevo!")
+            # Otorgar monedas
+            st.session_state.coins = 3
+            # Guardamos progreso: nivel_actual pasa a ser 1 (Ya desbloqueó el nivel 1)
+            st.session_state.nivel_guardado = 1
+            
+            db.actualizar_progreso_db(
+                st.session_state.usuario, 
+                st.session_state.coins, 
+                1, 
+                exp=p1, meta=p2, que_es=p3
+            )
+            
+            st.success("🎉 ¡Felicidades! Has obtenido 3 monedas. ¡Cargando Nivel 1...!")
+            
+            # TRUCO MÁGICO: Cambiamos el menú actual y forzamos reinicio para saltar al Nivel 1 automáticamente
+            st.session_state.menu_actual = "🎯 Jugar: Nivel 1 (Hola Mundo)"
+            st.rerun()
