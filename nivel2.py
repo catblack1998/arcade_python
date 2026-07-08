@@ -1,4 +1,5 @@
 import streamlit as st
+import db
 
 def mostrar_nivel():
     st.subheader("🎯 Nivel 2: Las Cajas Mágicas (Variables)")
@@ -15,11 +16,10 @@ def mostrar_nivel():
     personaje = "Enmanuel"
     print(personaje)
     ```
-    *Aquí creamos la caja llamada `personaje`, guardamos el texto `"Enmanuel"` adentro, y luego la mostramos en la pantalla.*
     
     ⚠️ **REGLAS IMPORTANTES:**
     1. Los nombres de las variables no llevan comillas.
-    2. No uses espacios en el nombre de la caja (usa guion bajo si necesitas espacio, ej: `mi_nombre`).
+    2. No uses espacios en el nombre de la caja.
     """)
     
     st.write("---")
@@ -31,22 +31,34 @@ def mostrar_nivel():
     # Botón para verificar
     if st.button("🚀 Lanzar Código (Cuesta 1 Moneda)"):
         if st.session_state.coins <= 0:
-            st.error("💀 GAME OVER: Te quedaste sin monedas. ¡Ve a la encuesta a trabajar por más!")
+            st.error("💀 GAME OVER: Te quedaste sin monedas. ¡Debes ir a la pestaña de la encuesta a trabajar por más!")
             return
             
         st.session_state.coins -= 1
         
-        # Validación (quitamos espacios de más para ayudarlo)
+        # Validación limpia (eliminando espacios para evitar falsos errores)
         clean_code = user_code.replace(" ", "")
         correct_answer_1 = 'mascota="Firulais"'
         correct_answer_2 = "mascota='Firulais'"
         
         if clean_code == correct_answer_1 or clean_code == correct_answer_2:
-            st.success("🎉 ¡BRUTAL! Has guardado con éxito a Firulais en tu variable. ¡Eres un programador oficial!")
+            # 1. Subir el nivel guardado a 3 en la memoria global
+            st.session_state.nivel_guardado = 3
+            
+            # 2. Guardar el nuevo nivel y las monedas actuales en Clever Cloud
+            db.actualizar_progreso_db(st.session_state.usuario, st.session_state.coins, 3)
+            
+            st.success("🎉 ¡BRUTAL! Has completado el Nivel 2. ¡Teletransportándote al Nivel 3...!")
+            
+            # 3. ORDEN MÁGICA: Cambiar la navegación automática al Nivel 3 y reiniciar la pantalla
+            st.session_state.menu_actual = "🧮 Jugar: Nivel 3 (Matemáticas)"
+            st.rerun()
         else:
+            # Si se equivoca, guardamos la resta de la moneda en la base de datos
+            db.actualizar_progreso_db(st.session_state.usuario, st.session_state.coins, st.session_state.nivel_guardado)
+            
             if st.session_state.coins > 0:
-                st.error("❌ Algo falló en la caja. Revisa que se llame `mascota`, tenga el `=` y el texto esté entre comillas.")
+                st.error("❌ Algo falló en tu caja. Revisa que se llame `mascota`, tenga el `=` y el texto esté entre comillas.")
             else:
                 st.error("💀 GAME OVER: Gastaste tu última moneda. ¡Ve a la encuesta a recuperar fondos!")
-        
-        st.rerun()
+            st.rerun()
